@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garage</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ec;--surface:#ede9e1;--surface2:#e4dfd5;
+  --border:#ccc7bc;--border2:#b8b2a7;
+  --text:#1e1c18;--text2:#6b6760;--text3:#9e9a93;
+  --accent:#2d5a3d;--accent-light:#e8f0eb;--accent-border:#7aab88;
+  --wood:#c8a96e;--wood-dark:#a8874e;
+  --hl:#fff3cd;--hl-border:#e6c84a;
+  --flash:#ffd700;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh}
+
+header{padding:1.2rem 1.5rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+header h1{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;letter-spacing:.04em;flex:1;min-width:80px}
+.hdr-btn{font-family:'DM Mono',monospace;font-size:12px;padding:6px 13px;border:1px solid var(--border2);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:background .15s}
+.hdr-btn:hover{background:var(--surface2)}
+.hdr-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hdr-btn.primary:hover{background:#234a31}
+
+.search-bar{width:100%;padding:.75rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;max-width:440px;min-width:160px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+#search{width:100%;padding:8px 10px 8px 34px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
+#search:focus{border-color:var(--accent-border)}
+#search-results{font-size:13px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap}
+#search-nav{display:none;align-items:center;gap:6px}
+#search-nav button{font-size:13px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:pointer;font-family:'DM Mono',monospace;color:var(--text)}
+#search-nav button:hover{background:var(--surface2)}
+#search-counter{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+
+main{padding:1.5rem;display:flex;flex-direction:column;gap:2.5rem}
+.wall-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.wall-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* SHELVES */
+.shelves-row{display:flex;gap:10px;align-items:stretch}
+.shelf-unit{flex:1;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.shelf-unit-header{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;flex-shrink:0}
+.shelf-unit-header:hover{color:var(--text)}
+.shelf-unit-header .rh{opacity:0;font-size:10px}
+.shelf-unit-header:hover .rh{opacity:1}
+/* shelves fill height equally */
+.shelves-inner{display:flex;flex-direction:column;flex:1}
+.shelf{flex:1;border-bottom:1px solid var(--border);padding:10px 10px 14px;position:relative;display:flex;flex-direction:column}
+.shelf:last-child{border-bottom:none}
+.shelf::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--wood);opacity:.45}
+.shelf-name{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;cursor:pointer;flex-shrink:0}
+.shelf-name:hover{color:var(--text2)}
+.shelf-floor{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;flex:1}
+.item-tag{font-size:12px;padding:3px 9px;border-radius:20px;background:var(--bg);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .12s;line-height:1.4}
+.item-tag:hover{border-color:var(--border2);background:var(--surface2)}
+.item-tag.flash-match{animation:flashpulse 1.2s ease 3;background:var(--flash);border-color:#b8960a}
+.item-tag.add-tag{color:var(--text3);border-style:dashed}
+.item-tag.add-tag:hover{color:var(--text2);border-color:var(--border2)}
+
+/* KALLAX */
+.kallax-row{display:flex;gap:16px;align-items:flex-end}
+.kallax-column{display:flex;flex-direction:column;align-items:stretch}
+.on-top{background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;padding:6px 8px;min-height:38px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.on-top-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);width:100%;margin-bottom:2px}
+.kallax-frame{border:3px solid var(--wood-dark);border-radius:0 0 4px 4px;background:var(--wood);padding:4px;display:inline-grid;gap:3px}
+.kallax-title{grid-column:1/-1;font-family:'DM Mono',monospace;font-size:10px;color:var(--wood-dark);text-align:center;padding:2px 0 4px;cursor:pointer;letter-spacing:.04em}
+.cube{background:var(--bg);border:1px solid var(--border);border-radius:3px;min-height:64px;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;cursor:grab;transition:border-color .12s,background .12s,opacity .12s;position:relative;flex-direction:column;gap:4px}
+.cube:active{cursor:grabbing}
+.cube:hover{border-color:var(--border2);background:var(--surface)}
+.cube.dragging{opacity:.3}
+.cube.drag-over{border-color:var(--accent-border);background:var(--accent-light)}
+.cube.flash-match{animation:flashpulse 1.2s ease 3}
+.cube-content{font-size:11px;color:var(--text);line-height:1.4;word-break:break-word}
+.cube-empty{font-size:11px;color:var(--text3);font-style:italic}
+.cube-actions{display:none;position:absolute;bottom:3px;right:3px;gap:3px}
+.cube:hover .cube-actions{display:flex}
+.cube-btn{font-size:9px;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;white-space:nowrap}
+.cube-btn:hover{background:var(--surface2)}
+.cube-btn.cam{background:var(--accent-light);border-color:var(--accent-border);color:var(--accent)}
+.floor-line{height:6px;background:var(--wood-dark);border-radius:0 0 3px 3px;opacity:.6;margin-top:-1px}
+
+@keyframes flashpulse{
+  0%{background:var(--flash);border-color:#b8960a;transform:scale(1)}
+  20%{transform:scale(1.04)}
+  50%{background:var(--flash);border-color:#b8960a}
+  100%{background:var(--bg);border-color:var(--border);transform:scale(1)}
+}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.5rem;width:380px;max-width:92vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:1rem;font-family:'DM Mono',monospace}
+.modal input,.modal textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);margin-bottom:.65rem;outline:none}
+.modal input:focus,.modal textarea:focus{border-color:var(--accent-border)}
+.modal textarea{resize:vertical;min-height:70px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;flex-wrap:wrap}
+.modal-btns button{font-family:'DM Mono',monospace;font-size:12px;padding:7px 14px;border:1px solid var(--border2);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer}
+.modal-btns .confirm{background:var(--accent);color:#fff;border-color:var(--accent)}
+.modal-btns .del-btn{color:#c0392b;border-color:#e8b4b0}
+.modal-btns .del-btn:hover{background:#fdf0ef}
+
+.photo-drop{border:2px dashed var(--border2);border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:1rem;position:relative}
+.photo-drop:hover,.photo-drop.dragover{border-color:var(--accent-border);background:var(--accent-light)}
+.photo-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-drop p{font-size:13px;color:var(--text2);pointer-events:none}
+.photo-drop .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.photo-preview{width:100%;max-height:200px;object-fit:contain;border-radius:6px;margin-bottom:.75rem;display:none}
+.ai-results{margin-bottom:.75rem}
+.ai-results-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:6px}
+.ai-item-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto}
+.ai-item-row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface);border-radius:5px;border:1px solid var(--border)}
+.ai-item-row input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0}
+.ai-item-row label{font-size:13px;flex:1;cursor:pointer}
+.ai-spinner{text-align:center;padding:1.5rem;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+.ai-spinner::after{content:'';display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px;margin-left:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-error{font-size:12px;color:#c0392b;padding:.5rem;background:#fdf0ef;border-radius:5px;margin-bottom:.5rem}
+
+#toast{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:999}
+#toast.show{opacity:1}
+
+@media(max-width:640px){main{padding:1rem;gap:2rem}.shelves-row{flex-wrap:wrap}.kallax-row{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 Garage</h1>
+  <button class="hdr-btn" onclick="exportTxt()">↓ Export</button>
+  <button class="hdr-btn primary" onclick="copyLink()">⇗ Share</button>
+</header>
+
+<div class="search-bar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="search" placeholder="Find something in the garage…" oninput="doSearch(this.value)" onkeydown="searchKey(event)" autocomplete="off">
+  </div>
+  <span id="search-results"></span>
+  <div id="search-nav">
+    <button onclick="navMatch(-1)">← prev</button>
+    <span id="search-counter"></span>
+    <button onclick="navMatch(1)">next →</button>
+  </div>
+</div>
+
+<main>
+  <section>
+    <div class="wall-label">Shelves — left wall</div>
+    <div class="shelves-row" id="shelves-row"></div>
+  </section>
+  <section>
+    <div class="wall-label">Kallax — right wall</div>
+    <div class="kallax-row" id="kallax-row"></div>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h2 id="modal-title">Edit</h2>
+    <input type="text" id="modal-input" placeholder="">
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ai-modal-overlay" onclick="closeAiModal(event)">
+  <div class="modal">
+    <h2 id="ai-modal-title">📷 Scan cube contents</h2>
+    <div class="photo-drop" id="photo-drop">
+      <input type="file" accept="image/*" capture="environment" id="photo-input" onchange="handlePhotoSelect(event)">
+      <p>Take a photo or choose an image</p>
+      <p class="sub">Point camera at the open cube</p>
+    </div>
+    <img id="photo-preview" class="photo-preview" alt="Cube photo">
+    <div id="ai-status"></div>
+    <div class="ai-results" id="ai-results" style="display:none">
+      <div class="ai-results-label">AI spotted these items — tick what to keep:</div>
+      <div class="ai-item-list" id="ai-item-list"></div>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeAiModal()">Cancel</button>
+      <button class="confirm" id="ai-apply-btn" style="display:none" onclick="applyAiItems()">Apply selected</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='garage_v6';
+
+const defaultData={
+  shelves:[
+    {id:'su1',label:'Left unit',shelves:[
+      {id:'sl1',label:'Top',items:['PCs to sell on eBay']},
+      {id:'sl2',label:'Middle',items:['Bread maker','Globe','Steamer','Sim gear']},
+      {id:'sl3',label:'Bottom',items:['Pressure washer etc']},
+    ]},
+    {id:'su2',label:'Middle unit',shelves:[
+      {id:'sm1',label:'Top',items:['Pedals for eBay','Small tech boxes']},
+      {id:'sm2',label:'Shelf 2',items:['Sewing machine','Sleeping bag','Khet']},
+      {id:'sm3',label:'Shelf 3',items:['Yoga mat','Tent','Fridge magnets','Printer']},
+      {id:'sm4',label:'Bottom',items:['Shoes']},
+    ]},
+    {id:'su3',label:'Right unit',shelves:[
+      {id:'sr1',label:'Top',items:['Helmet','Buckets','Camp bed','Careers']},
+      {id:'sr2',label:'Shelf 2',items:['OS Maps','Trumper','Bike tools','Kids walking boots','Large chess','Picture frames']},
+      {id:'sr3',label:'Shelf 3',items:['Bags']},
+      {id:'sr4',label:'Bottom',items:['Rocks','Shoes']},
+    ]},
+  ],
+  kallax:[
+    {id:'ka',label:'Left Kallax',cols:2,rows:4,
+     ontop:['Workmate'],
+     cubes:[
+       '','',
+       '','',
+       'Grown up toys','Board games',
+       'Gift bags','Small games',
+     ]},
+    {id:'kb',label:'Middle Kallax',cols:2,rows:6,
+     ontop:[],
+     cubes:[
+       'empty','empty',
+       'Baby toys','Baby toys',
+       'Board games','Books',
+       'Small toys','Small toys',
+       'Tech / PC & camera','Tech / plug splitter',
+       'Car cleaning','Heater / Dehumidifier / Peg spider / Shoe sizer',
+     ]},
+    {id:'kc',label:'Right Kallax',cols:2,rows:6,
+     ontop:[],
+     cubes:[
+       'Camping stuff','Bags for life',
+       'Swimming / Water pistols','Balls',
+       'Board games','RC car / Rock tumbler',
+       'Blankets / Seat pads','Sleeping bag / Camp mattress',
+       'Power tools','Balls / Frisbee / Golf shoes',
+       'Painting / Dust sheets','Paints & solvents',
+     ]},
+  ]
+};
+
+function load(){try{const s=localStorage.getItem(KEY);if(s)return JSON.parse(s);}catch(e){}return JSON.parse(JSON.stringify(defaultData));}
+function save(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
+
+let data=load();
+let dragSrc=null;
+let q='';
+let matchEls=[];
+let matchIdx=0;
+
+function openModal(title,value,placeholder,btns){
+  document.getElementById('modal-title').textContent=title;
+  const inp=document.getElementById('modal-input');
+  inp.value=value;inp.placeholder=placeholder||'';
+  const bc=document.getElementById('modal-btns');
+  bc.innerHTML='';
+  btns.forEach(b=>{
+    const el=document.createElement('button');
+    el.textContent=b.label;
+    if(b.cls)el.className=b.cls;
+    el.onclick=()=>{closeModal();b.cb(inp.value.trim());};
+    bc.appendChild(el);
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>inp.focus(),50);
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay'))return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+let aiTarget=null;
+let aiBase64=null;
+
+function openAiModal(target,titleStr){
+  aiTarget=target;aiBase64=null;
+  document.getElementById('ai-modal-title').textContent='📷 '+titleStr;
+  document.getElementById('photo-drop').style.display='';
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-preview').src='';
+  document.getElementById('ai-status').innerHTML='';
+  document.getElementById('ai-results').style.display='none';
+  document.getElementById('ai-item-list').innerHTML='';
+  document.getElementById('ai-apply-btn').style.display='none';
+  document.getElementById('photo-input').value='';
+  document.getElementById('ai-modal-overlay').classList.add('open');
+}
+function closeAiModal(e){
+  if(e&&e.target!==document.getElementById('ai-modal-overlay'))return;
+  document.getElementById('ai-modal-overlay').classList.remove('open');
+}
+
+function handlePhotoSelect(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const dataUrl=ev.target.result;
+    aiBase64=dataUrl.split(',')[1];
+    const prev=document.getElementById('photo-preview');
+    prev.src=dataUrl;prev.style.display='block';
+    document.getElementById('photo-drop').style.display='none';
+    runAiScan(aiBase64,file.type||'image/jpeg');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runAiScan(base64,mimeType){
+  const status=document.getElementById('ai-status');
+  const results=document.getElementById('ai-results');
+  const list=document.getElementById('ai-item-list');
+  const applyBtn=document.getElementById('ai-apply-btn');
+  results.style.display='none';
+  applyBtn.style.display='none';
+  status.innerHTML='<div class="ai-spinner">Analysing photo</div>';
+  const prompt=`You are looking at a photo of the inside of a storage cube or shelf in someone's garage.
+List every distinct item or category of items you can see.
+Be specific but concise — e.g. "yellow extension lead", "camping stove", "tin of white paint", "box of screws".
+If you genuinely cannot tell, say "unknown items".
+Respond ONLY with a JSON array of strings, no explanation, no markdown. Example: ["item one","item two"]`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mimeType,data:base64}},
+          {type:'text',text:prompt}
+        ]}]
+      })
+    });
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error?.message||'API error '+resp.status);}
+    const json=await resp.json();
+    const text=json.content.find(b=>b.type==='text')?.text||'[]';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const items=JSON.parse(clean);
+    if(!Array.isArray(items)||items.length===0){status.innerHTML='<div class="ai-error">Couldn\'t identify any items. Try a clearer photo.</div>';return;}
+    status.innerHTML='';
+    list.innerHTML='';
+    items.forEach((item,i)=>{
+      const row=document.createElement('div');
+      row.className='ai-item-row';
+      const cb=document.createElement('input');
+      cb.type='checkbox';cb.id='ai-cb-'+i;cb.checked=true;
+      const lbl=document.createElement('label');
+      lbl.htmlFor='ai-cb-'+i;lbl.textContent=item;
+      lbl.contentEditable=true;lbl.style.outline='none';
+      row.appendChild(cb);row.appendChild(lbl);
+      list.appendChild(row);
+    });
+    results.style.display='';
+    applyBtn.style.display='';
+  }catch(err){
+    status.innerHTML='<div class="ai-error">Error: '+err.message+'</div>';
+  }
+}
+
+function applyAiItems(){
+  const rows=document.querySelectorAll('.ai-item-row');
+  const chosen=[];
+  rows.forEach(row=>{
+    const cb=row.querySelector('input[type=checkbox]');
+    const lbl=row.querySelector('label');
+    if(cb.checked&&lbl.textContent.trim())chosen.push(lbl.textContent.trim());
+  });
+  if(!chosen.length){toast('Nothing selected');return;}
+  const t=aiTarget;
+  if(t.type==='cube'){
+    data.kallax[t.ki].cubes[t.ci]=chosen.join(', ');
+  }else if(t.type==='shelf'){
+    chosen.forEach(item=>data.shelves[t.ui].shelves[t.si].items.push(item));
+  }else if(t.type==='ontop'){
+    chosen.forEach(item=>data.kallax[t.ki].ontop.push(item));
+  }
+  save(data);render();
+  closeAiModal();
+  toast('Items added from photo ✓');
+}
+
+function doSearch(val){
+  q=val.trim();matchEls=[];matchIdx=0;
+  render();updateSearchUI();
+}
+function updateSearchUI(){
+  const res=document.getElementById('search-results');
+  const nav=document.getElementById('search-nav');
+  const counter=document.getElementById('search-counter');
+  if(!q){res.textContent='';nav.style.display='none';return;}
+  const n=matchEls.length;
+  if(n===0){res.textContent='nothing found';nav.style.display='none';return;}
+  res.textContent='';
+  nav.style.display='flex';
+  counter.textContent=(matchIdx+1)+' / '+n;
+  scrollToMatch(matchIdx);
+}
+function navMatch(dir){
+  if(!matchEls.length)return;
+  matchIdx=(matchIdx+dir+matchEls.length)%matchEls.length;
+  document.getElementById('search-counter').textContent=(matchIdx+1)+' / '+matchEls.length;
+  scrollToMatch(matchIdx);
+}
+function searchKey(e){if(e.key==='Enter')navMatch(1);}
+function scrollToMatch(idx){
+  const el=matchEls[idx];
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash-match');
+  void el.offsetWidth;
+  el.classList.add('flash-match');
+}
+
+function render(){matchEls=[];renderShelves();renderKallax();updateSearchUI();}
+function isMatch(text){return q&&text&&text.toLowerCase().includes(q.toLowerCase());}
+
+function renderShelves(){
+  const row=document.getElementById('shelves-row');
+  row.innerHTML='';
+  data.shelves.forEach((unit,ui)=>{
+    const div=document.createElement('div');
+    div.className='shelf-unit';
+    const hdr=document.createElement('div');
+    hdr.className='shelf-unit-header';
+    hdr.innerHTML=`<span>${unit.label}</span><span class="rh">rename</span>`;
+    hdr.onclick=()=>openModal('Rename unit',unit.label,'Unit name',[
+      {label:'Cancel',cb:()=>{}},
+      {label:'Save',cls:'confirm',cb:v=>{if(v){data.shelves[ui].label=v;save(data);render();}}}
+    ]);
+    div.appendChild(hdr);
+    const inner=document.createElement('div');
+    inner.className='shelves-inner';
+    unit.shelves.forEach((shelf,si)=>{
+      const s=document.createElement('div');
+      s.className='shelf';
+      const nm=document.createElement('div');
+      nm.className='shelf-name';
+      nm.textContent=shelf.label+' ✎';
+      nm.onclick=()=>openModal('Rename shelf',shelf.label,'Shelf name',[
+        {label:'Cancel',cb:()=>{}},
+        {label:'Save',cls:'confirm',cb:v=>{if(v){data.shelves[ui].shelves[si].label=v;save(data);render();}}}
+      ]);
+      s.appendChild(nm);
+      const floor=document.createElement('div');
+      floor.className='shelf-floor';
+      shelf.items.forEach((item,ii)=>{
+        const t=document.createElement('span');
+        t.className='item-tag';
+        t.textContent=item;
+        if(isMatch(item))matchEls.push(t);
+        t.onclick=()=>openModal('Edit item',item,'',[
+          {label:'Delete',cls:'del-btn',cb:()=>{data.shelves[ui].shelves[si].items.splice(ii,1);save(data);render();}},
+          {label:'Cancel',cb:()=>{}},
+          {label:'Save',cls:'confirm',cb:v=>{if(v){data.shelves[ui].shelves[si].items[ii]=v;save(data);render();}}}
+        ]);
+        floor.appendChild(t);
+      });
+      const cam=document.createElement('span');
+      cam.className='item-tag add-tag';
+      cam.innerHTML='📷';cam.title='Scan shelf with AI';
+      cam.style.cssText='border-style:dashed;color:var(--accent);cursor:pointer';
+      cam.onclick=()=>openAiModal({type:'shelf',ui,si},'Scan shelf: '+shelf.label);
+      floor.appendChild(cam);
+      const add=document.createElement('span');
+      add.className='item-tag add-tag';add.textContent='+ add';
+      add.onclick=()=>openModal('Add item','',' Item name',[
+        {label:'Cancel',cb:()=>{}},
+        {label:'Add',cls:'confirm',cb:v=>{if(v){data.shelves[ui].shelves[si].items.push(v);save(data);render();}}}
+      ]);
+      floor.appendChild(add);
+      s.appendChild(floor);
+      inner.appendChild(s);
+    });
+    div.appendChild(inner);
+    row.appendChild(div);
+  });
+}
+
+function renderKallax(){
+  const row=document.getElementById('kallax-row');
+  row.innerHTML='';
+  data.kallax.forEach((k,ki)=>{
+    const col=document.createElement('div');
+    col.className='kallax-column';
+    const ontop=document.createElement('div');
+    ontop.className='on-top';
+    const otlbl=document.createElement('div');
+    otlbl.className='on-top-label';otlbl.textContent='on top';
+    ontop.appendChild(otlbl);
+    (k.ontop||[]).forEach((item,ii)=>{
+      const t=document.createElement('span');
+      t.className='item-tag';t.textContent=item;
+      if(isMatch(item))matchEls.push(t);
+      t.onclick=()=>openModal('Edit item on top',item,'',[
+        {label:'Delete',cls:'del-btn',cb:()=>{data.kallax[ki].ontop.splice(ii,1);save(data);render();}},
+        {label:'Cancel',cb:()=>{}},
+        {label:'Save',cls:'confirm',cb:v=>{if(v){data.kallax[ki].ontop[ii]=v;save(data);render();}}}
+      ]);
+      ontop.appendChild(t);
+    });
+    const addTop=document.createElement('span');
+    addTop.className='item-tag add-tag';addTop.textContent='+ add';
+    addTop.onclick=()=>openModal('Add item on top','',' Item name',[
+      {label:'Cancel',cb:()=>{}},
+      {label:'Add',cls:'confirm',cb:v=>{if(v){data.kallax[ki].ontop.push(v);save(data);render();}}}
+    ]);
+    ontop.appendChild(addTop);
+    const camTop=document.createElement('span');
+    camTop.className='item-tag add-tag';camTop.innerHTML='📷';
+    camTop.style.cssText='border-style:dashed;color:var(--accent);cursor:pointer';
+    camTop.onclick=()=>openAiModal({type:'ontop',ki},'Scan top of '+k.label);
+    ontop.appendChild(camTop);
+    col.appendChild(ontop);
+
+    const frame=document.createElement('div');
+    frame.className='kallax-frame has-top';
+    frame.style.gridTemplateColumns=`repeat(${k.cols},96px)`;
+    const title=document.createElement('div');
+    title.className='kallax-title';title.textContent=k.label+' ✎';
+    title.onclick=()=>openModal('Rename Kallax',k.label,'',[
+      {label:'Cancel',cb:()=>{}},
+      {label:'Save',cls:'confirm',cb:v=>{if(v){data.kallax[ki].label=v;save(data);render();}}}
+    ]);
+    frame.appendChild(title);
+    k.cubes.forEach((content,ci)=>{
+      const cube=document.createElement('div');
+      cube.className='cube';
+      const isEmpty=!content||content==='empty';
+      if(isMatch(content))matchEls.push(cube);
+      cube.draggable=true;
+      const inner=document.createElement('div');
+      inner.className=isEmpty?'cube-empty':'cube-content';
+      inner.textContent=isEmpty?'empty':content;
+      cube.appendChild(inner);
+      const actions=document.createElement('div');
+      actions.className='cube-actions';
+      const editBtn=document.createElement('button');
+      editBtn.className='cube-btn';editBtn.textContent='edit';
+      editBtn.onclick=e=>{
+        e.stopPropagation();
+        openModal('Edit cube',isEmpty?'':content,"What's in here?",[
+          {label:'Clear',cls:'del-btn',cb:()=>{data.kallax[ki].cubes[ci]='';save(data);render();}},
+          {label:'Cancel',cb:()=>{}},
+          {label:'Save',cls:'confirm',cb:v=>{data.kallax[ki].cubes[ci]=v;save(data);render();}}
+        ]);
+      };
+      const camBtn=document.createElement('button');
+      camBtn.className='cube-btn cam';camBtn.textContent='📷 scan';
+      camBtn.onclick=e=>{
+        e.stopPropagation();
+        openAiModal({type:'cube',ki,ci},'Scan cube — row '+(Math.floor(ci/k.cols)+1)+', col '+(ci%k.cols+1));
+      };
+      actions.appendChild(editBtn);actions.appendChild(camBtn);
+      cube.appendChild(actions);
+      cube.ondragstart=e=>{dragSrc={ki,ci};setTimeout(()=>cube.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move';};
+      cube.ondragend=()=>cube.classList.remove('dragging');
+      cube.ondragover=e=>{e.preventDefault();cube.classList.add('drag-over');};
+      cube.ondragleave=()=>cube.classList.remove('drag-over');
+      cube.ondrop=e=>{
+        e.preventDefault();cube.classList.remove('drag-over');
+        if(!dragSrc)return;
+        if(dragSrc.ki===ki&&dragSrc.ci===ci)return;
+        const tmp=data.kallax[dragSrc.ki].cubes[dragSrc.ci];
+        data.kallax[dragSrc.ki].cubes[dragSrc.ci]=data.kallax[ki].cubes[ci];
+        data.kallax[ki].cubes[ci]=tmp;
+        dragSrc=null;save(data);render();toast('Swapped!');
+      };
+      frame.appendChild(cube);
+    });
+    col.appendChild(frame);
+    const fl=document.createElement('div');fl.className='floor-line';
+    col.appendChild(fl);
+    row.appendChild(col);
+  });
+}
+
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2400);}
+
+function exportTxt(){
+  const lines=['GARAGE INVENTORY','================','','SHELVES — LEFT WALL',''];
+  data.shelves.forEach(u=>{
+    lines.push(u.label.toUpperCase());
+    u.shelves.forEach(s=>lines.push('  '+s.label+': '+(s.items.join(', ')||'(empty)')));
+    lines.push('');
+  });
+  lines.push('KALLAX — RIGHT WALL','');
+  data.kallax.forEach(k=>{
+    lines.push(k.label.toUpperCase());
+    if(k.ontop&&k.ontop.length)lines.push('  On top: '+k.ontop.join(', '));
+    for(let r=0;r<k.rows;r++){
+      const row=k.cubes.slice(r*k.cols,(r+1)*k.cols).map(c=>(c||'(empty)').padEnd(30)).join(' | ');
+      lines.push('  '+row);
+    }
+    lines.push('');
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain'}));
+  a.download='garage.txt';a.click();toast('Exported!');
+}
+
+function copyLink(){
+  const encoded=encodeURIComponent(JSON.stringify(data));
+  const url=location.href.split('#')[0]+'#data='+encoded;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>toast('Link copied — send it to your wife ✓')).catch(()=>prompt('Copy this link:',url));
+  }else{prompt('Copy this link:',url);}
+}
+
+(function(){
+  try{
+    const h=location.hash;
+    if(h.startsWith('#data=')){const d=JSON.parse(decodeURIComponent(h.slice(6)));if(d&&d.shelves&&d.kallax){data=d;save(data);}}
+  }catch(e){}
+})();
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.getElementById('ai-modal-overlay').classList.remove('open');
+  }
+});
+
+const drop=document.getElementById('photo-drop');
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});
+drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
+drop.addEventListener('drop',e=>{
+  e.preventDefault();drop.classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')){handlePhotoSelect({target:{files:[file]}});}
+});
+
+render();
+</script>
+</body>
+</html>
